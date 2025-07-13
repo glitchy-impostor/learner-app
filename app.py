@@ -9,14 +9,14 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-RANDOM-key-change-IZATION-in-production'
+app.config['SECRET_KEY'] = os.envrion.get("secret")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 # Set OpenAI API key
-openai.api_key = "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"
+openai.api_key = os.environ.get("openai")
 
 # Database Models
 class User(db.Model):
