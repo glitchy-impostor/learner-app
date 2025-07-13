@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Learn: {{ topic.title }} - Day {{ day }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <div>
+            <h1>{{ topic.title }}</h1>
+            <p style="color: #718096;">Day {{ day }} of {{ topic.timeframe_days }}</p>
+        </div>
+        <div class="progress-bar" style="width: 200px;">
+            <div class="progress-fill" style="width: {{ (day / topic.timeframe_days * 100) }}%;"></div>
+        </div>
+    </div>
+    
+    <!-- Notes Section -->
+    <div class="learning-section" data-section="notes">
+        <h2 style="margin-bottom: 20px;">📝 Today's Learning Notes</h2>
+        {% for note in notes.notes if notes.notes %}
+            <div class="card" style="margin: 15px 0; border-left: 4px solid #667eea;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">{{ note.title }}</h3>
+                <p>{{ note.content }}</p>
+            </div>
+        {% endfor %}
+        <button onclick="completeSection('notes')" class="btn" style="margin-top: 20px;">Continue to Flashcards</button>
+    </div>
+    
+    <!-- Flashcards Section -->
+    <div class="learning-section" data-section="flashcards" style="display: none;">
+        <h2 style="margin-bottom: 20px;">🔄 Practice Flashcards</h2>
+        <div id="flashcard-container">
+            {% for flashcard in flashcards.flashcards if flashcards.flashcards %}
+                <div class="flashcard" data-id="{{ loop.index }}" onclick="flipCard(this)">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <p>{{ flashcard.front }}</p>
+                        </div>
+                        <div class="flashcard-back">
+                            <p>{{ flashcard.back }}</p>
+                            <small style="opacity: 0.8; margin-top: 15px; display: block;">Related to: {{ flashcard.note_reference }}</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="completeSection('flashcards')" class="btn">Continue to Today's Quiz</button>
+        </div>
+    </div>
+    
+    <!-- Today's Quiz Section -->
+    <div class="learning-section" data-section="today_quiz" style="display: none;">
+        <h2 style="margin-bottom: 20px;">📋 Today's Quiz</h2>
+        <div id="today-quiz-container">
+            {% for question in today_quiz.quiz if today_quiz.quiz %}
+                <div class="quiz-question" data-question-id="{{ loop.index }}">
+                    <h3>Question {{ loop.index }}</h3>
+                    <p style="margin: 15px 0;">{{ question.question }}</p>
+                    
+                    {% if question.type == 'multiple_choice' %}
+                        <div class="quiz-options">
+                            {% for option in question.options %}
+                                <label class="quiz-option" onclick="selectOption(this, '{{ loop.index }}', '{{ question.correct_answer }}')">
+                                    <input type="radio" name="q{{ loop.index0 }}" value="{{ option }}" style="display: none;">
+                                    {{ option }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <textarea class="quiz-answer" data-correct="{{ question.correct_answer }}" 
+                                  placeholder="Type your answer here..." rows="3"></textarea>
+                    {% endif %}
+                    
+                    <div class="quiz-explanation" style="display: none; margin-top: 15px; padding: 15px; background: #f0f4ff; border-radius: 8px;">
+                        <strong>Explanation:</strong> {{ question.explanation }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="submitTodayQuiz()" class="btn">Submit Quiz</button>
+        </div>
+    </div>
+    
+    <!-- Overall Quiz Section -->
+    <div class="learning-section" data-section="overall_quiz" style="display: none;">
+        <h2 style="margin-bottom: 20px;">🧠 Comprehensive Review Quiz</h2>
+        <div id="overall-quiz-container">
+            {% for question in overall_quiz.quiz if overall_quiz.quiz %}
+                <div class="quiz-question" data-question-id="{{ loop.index }}">
+                    <h3>Question {{ loop.index }}</h3>
+                    <p style="margin: 15px 0;">{{ question.question }}</p>
+                    
+                    {% if question.type == 'multiple_choice' %}
+                        <div class="quiz-options">
+                            {% for option in question.options %}
+                                <label class="quiz-option" onclick="selectOption(this, '{{ loop.index }}', '{{ question.correct_answer }}')">
+                                    <input type="radio" name="oq{{ loop.index0 }}" value="{{ option }}" style="display: none;">
+                                    {{ option }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <textarea class="quiz-answer" data-correct="{{ question.correct_answer }}" 
+                                  placeholder="Type your answer here..." rows="3"></textarea>
+                    {% endif %}
+                    
+                    <div class="quiz-explanation" style="display: none; margin-top: 15px; padding: 15px; background: #f0f4ff; border-radius: 8px;">
+                        <strong>Explanation:</strong> {{ question.explanation }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="submitOverallQuiz()" class="btn">Submit Review Quiz</button>
+        </div>
+    </div>
+    
+    <!-- Completion Section -->
+    <div class="learning-section" data-section="complete" style="display: none;">
+        <div style="text-align: center; padding: 50px;">
+            <h2 style="color: #667eea; margin-bottom: 20px;">🎉 Great job today!</h2>
+            <p style="margin-bottom: 30px; font-size: 18px;">You've completed Day {{ day }} of your {{ topic.title }} journey.</p>
+            <a href="{{ url_for('complete_day', topic_id=topic.id) }}" class="btn" style="font-size: 18px; padding: 15px 30px;">Complete Day & Return to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentSection = 'notes';
+let startTime = Date.now();
+let sectionStartTime = Date.now();
+
+function completeSection(sectionName) {
+    // Track time spent on current section
+    const timeSpent = Math.floor((Date.now() - sectionStartTime) / 1000);
+    trackProgress(currentSection, null, null, timeSpent);
+    
+    // Hide current section
+    document.querySelector(`[data-section="${currentSection}"]`).style.display = 'none';
+    
+    // Show next section
+    currentSection = sectionName;
+    document.querySelector(`[data-section="${sectionName}"]`).style.display = 'block';
+    sectionStartTime = Date.now();
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
+}
+
+function flipCard(card) {
+    card.classList.toggle('flipped');
+    
+    // Track flashcard interaction
+    const cardId = card.dataset.id;
+    const timeSpent = 3; // Assume 3 seconds per flip
+    trackProgress('flashcard', cardId, null, timeSpent);
+}
+
+function selectOption(option, questionId, correctAnswer) {
+    // Remove previous selections
+    const parent = option.parentElement;
+    parent.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+    
+    // Add selection
+    option.classList.add('selected');
+    option.querySelector('input').checked = true;
+}
+
+async function submitTodayQuiz() {
+    const questions = document.querySelectorAll('#today-quiz-container .quiz-question');
+    let allAnswered = true;
+    
+    questions.forEach(question => {
+        const questionId = question.dataset.questionId;
+        const selectedOption = question.querySelector('.quiz-option.selected');
+        const textAnswer = question.querySelector('.quiz-answer');
+        
+        if (!selectedOption && !textAnswer) {
+            allAnswered = false;
+            return;
+        }
+        
+        let isCorrect = false;
+        if (selectedOption) {
+            const selectedValue = selectedOption.querySelector('input').value;
+            const correctAnswer = selectedOption.getAttribute('onclick').match(/'([^']+)'$/)[1];
+            isCorrect = selectedValue === correctAnswer;
+        } else if (textAnswer && textAnswer.value.trim()) {
+            // Simple text comparison for now
+            isCorrect = textAnswer.value.toLowerCase().includes(textAnswer.dataset.correct.toLowerCase());
+        }
+        
+        // Show explanation
+        question.querySelector('.quiz-explanation').style.display = 'block';
+        
+        // Track progress
+        trackProgress('today_quiz', questionId, isCorrect, 30);
+    });
+    
+    if (!allAnswered) {
+        alert('Please answer all questions before submitting.');
+        return;
+    }
+    
+    setTimeout(() => completeSection('overall_quiz'), 2000);
+}
+
+async function submitOverallQuiz() {
+    const questions = document.querySelectorAll('#overall-quiz-container .quiz-question');
+    let allAnswered = true;
+    
+    questions.forEach(question => {
+        const questionId = question.dataset.questionId;
+        const selectedOption = question.querySelector('.quiz-option.selected');
+        const textAnswer = question.querySelector('.quiz-answer');
+        
+        if (!selectedOption && !textAnswer) {
+            allAnswered = false;
+            return;
+        }
+        
+        let isCorrect = false;
+        if (selectedOption) {
+            const selectedValue = selectedOption.querySelector('input').value;
+            const correctAnswer = selectedOption.getAttribute('onclick').match(/'([^']+)'$/)[1];
+            isCorrect = selectedValue === correctAnswer;
+        } else if (textAnswer && textAnswer.value.trim()) {
+            isCorrect = textAnswer.value.toLowerCase().includes(textAnswer.dataset.correct.toLowerCase());
+        }
+        
+        // Show explanation
+        question.querySelector('.quiz-explanation').style.display = 'block';
+        
+        // Track progress
+        trackProgress('overall_quiz', questionId, isCorrect, 45);
+    });
+    
+    if (!allAnswered) {
+        alert('Please answer all questions before submitting.');
+        return;
+    }
+    
+    setTimeout(() => completeSection('complete'), 2000);
+}
+
+async function trackProgress(contentType, questionId, isCorrect, timeSpent) {
+    try {
+        await fetch('{{ url_for("track_progress") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic_id: {{ topic.id }},
+                day_number: {{ day }},
+                content_type: contentType,
+                question_id: questionId || 'general',
+                is_correct: isCorrect,
+                time_spent: timeSpent
+            })
+        });
+    } catch (error) {
+        console.error('Error tracking progress:', error);
+    }
+}
+</script>
+{% endblock %}

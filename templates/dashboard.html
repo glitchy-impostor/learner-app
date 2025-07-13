@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Learning App{% endblock %}
+
+{% block content %}
+<div class="card">
+    <!-- Welcome Section -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white; padding: 30px 20px; margin-bottom: 25px; text-align: center; box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);">
+        <div style="font-size: 32px; margin-bottom: 15px;">👋</div>
+        <h1 style="font-size: 24px; margin-bottom: 8px; font-weight: bold;">Welcome back!</h1>
+        <p style="font-size: 14px; opacity: 0.9; word-break: break-word;">{{ user.email }}</p>
+    </div>
+    
+    <!-- Header Section -->
+    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h2 style="margin: 0; font-size: 20px; color: #2d3748;">Your Learning Topics</h2>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #718096;">Continue your learning journey</p>
+            </div>
+            <a href="{{ url_for('create_topic') }}" class="btn" style="flex-shrink: 0;">
+                <span style="margin-right: 5px;">+</span> New Topic
+            </a>
+        </div>
+    </div>
+    
+    <!-- Topics Section -->
+    {% if topics %}
+        <div class="topics-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            {% for topic in topics %}
+            <div class="topic-card-enhanced" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 18px; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.25); position: relative; overflow: hidden; transition: all 0.3s ease;">
+                <!-- Background decoration -->
+                <div style="position: absolute; top: -30px; right: -30px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.6;"></div>
+                <div style="position: absolute; bottom: -20px; left: -20px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.4;"></div>
+                
+                <!-- Content -->
+                <div style="position: relative; z-index: 1;">
+                    <!-- Topic Header -->
+                    <div style="margin-bottom: 15px;">
+                        <h3 class="topic-title" style="font-size: 20px; font-weight: bold; margin-bottom: 8px; line-height: 1.3; word-break: break-word;">{{ topic.title }}</h3>
+                        <div class="topic-meta" style="opacity: 0.9; font-size: 14px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; font-size: 12px;">
+                                Day {{ topic.current_day }} of {{ topic.timeframe_days }}
+                            </span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; font-size: 12px;">
+                                {{ topic.frequency }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    {% set progress_percent = (topic.current_day / topic.timeframe_days * 100) if topic.timeframe_days > 0 else 0 %}
+                    <div style="margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; opacity: 0.8;">Progress</span>
+                            <span style="font-size: 12px; opacity: 0.8;">{{ "%.0f"|format(progress_percent) }}%</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden;">
+                            <div style="height: 100%; background: rgba(255,255,255,0.8); border-radius: 3px; width: {{ progress_percent }}%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <p style="margin-bottom: 20px; font-size: 14px; line-height: 1.5; opacity: 0.9;">
+                        {{ topic.description[:120] }}{% if topic.description|length > 120 %}...{% endif %}
+                    </p>
+                    
+                    <!-- Action Buttons -->
+                    <div class="mobile-stack" style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="{{ url_for('learn_paginated', topic_id=topic.id) }}" class="btn btn-secondary" style="background: rgba(255,255,255,0.9); color: #667eea; border: none; font-weight: 600; text-align: center; transition: all 0.3s ease;">
+                            <span style="margin-right: 5px;">📚</span> Continue Learning
+                        </a>
+                        {% if topic.current_day > 0 %}
+                            <a href="{{ url_for('view_all_flashcards', topic_id=topic.id) }}" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-weight: 600; text-align: center; transition: all 0.3s ease;">
+                                <span style="margin-right: 5px;">🔄</span> Review Flashcards
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Quick Stats -->
+        <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 15px; border: 1px solid #e2e8f0;">
+            <h3 style="margin-bottom: 15px; font-size: 16px; color: #2d3748; text-align: center;">Learning Summary</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; text-align: center;">
+                <div style="padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="font-size: 24px; font-weight: bold; color: #667eea; margin-bottom: 5px;">{{ topics|length }}</div>
+                    <div style="font-size: 12px; color: #718096;">Active Topics</div>
+                </div>
+                <div style="padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    {% set total_days = topics|sum(attribute='current_day') %}
+                    <div style="font-size: 24px; font-weight: bold; color: #48bb78; margin-bottom: 5px;">{{ total_days }}</div>
+                    <div style="font-size: 12px; color: #718096;">Days Completed</div>
+                </div>
+                <div style="padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    {% set avg_progress = (topics|sum(attribute='current_day') / topics|sum(attribute='timeframe_days') * 100) if topics|sum(attribute='timeframe_days') > 0 else 0 %}
+                    <div style="font-size: 24px; font-weight: bold; color: #ed8936; margin-bottom: 5px;">{{ "%.0f"|format(avg_progress) }}%</div>
+                    <div style="font-size: 12px; color: #718096;">Avg Progress</div>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state" style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 20px; border: 2px dashed #cbd5e0;">
+            <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.6;">📚</div>
+            <h3 style="font-size: 22px; margin-bottom: 12px; color: #2d3748;">Ready to start learning?</h3>
+            <p style="margin: 15px 0 25px 0; font-size: 16px; color: #718096; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+                Create your first learning topic and begin your personalized AI-powered education journey.
+            </p>
+            <a href="{{ url_for('create_topic') }}" class="btn" style="font-size: 16px; padding: 15px 30px; border-radius: 25px;">
+                <span style="margin-right: 8px;">🚀</span> Create Your First Topic
+            </a>
+            
+            <!-- Feature highlights -->
+            <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <div style="display: flex; align-items: center; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="font-size: 24px; margin-right: 15px;">🧠</div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: #2d3748; font-size: 14px;">AI-Powered Learning</div>
+                        <div style="color: #718096; font-size: 12px;">Personalized content generated just for you</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="font-size: 24px; margin-right: 15px;">📈</div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: #2d3748; font-size: 14px;">Adaptive Progress</div>
+                        <div style="color: #718096; font-size: 12px;">System learns from your performance</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="font-size: 24px; margin-right: 15px;">🎯</div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: #2d3748; font-size: 14px;">Goal-Oriented</div>
+                        <div style="color: #718096; font-size: 12px;">Learn at your own pace and schedule</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Mobile and Desktop Responsive Styles -->
+<style>
+    .topic-card-enhanced:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+    }
+    
+    .topic-card-enhanced .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .mobile-stack {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    @media (min-width: 768px) {
+        /* Desktop styles */
+        .card > div:first-child {
+            padding: 40px !important;
+            margin-bottom: 35px !important;
+            border-radius: 20px !important;
+        }
+        
+        .card > div:first-child > div {
+            font-size: 48px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        .card > div:first-child h1 {
+            font-size: 36px !important;
+            margin-bottom: 12px !important;
+        }
+        
+        .card > div:first-child p {
+            font-size: 18px !important;
+        }
+        
+        .card h2 {
+            font-size: 28px !important;
+        }
+        
+        .card > div:nth-child(2) p {
+            font-size: 16px !important;
+        }
+        
+        .topics-grid {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+            gap: 25px !important;
+        }
+        
+        .topic-card-enhanced {
+            padding: 35px !important;
+            border-radius: 24px !important;
+        }
+        
+        .topic-title {
+            font-size: 24px !important;
+            margin-bottom: 12px !important;
+        }
+        
+        .topic-meta {
+            font-size: 16px !important;
+            gap: 12px !important;
+        }
+        
+        .topic-meta span {
+            font-size: 14px !important;
+            padding: 6px 16px !important;
+        }
+        
+        .topic-card-enhanced p {
+            font-size: 16px !important;
+            margin-bottom: 25px !important;
+        }
+        
+        .mobile-stack {
+            flex-direction: row !important;
+            gap: 15px !important;
+        }
+        
+        .mobile-stack .btn {
+            flex: 1;
+        }
+        
+        .empty-state {
+            padding: 80px 40px !important;
+            border-radius: 30px !important;
+        }
+        
+        .empty-state > div:first-child {
+            font-size: 80px !important;
+            margin-bottom: 30px !important;
+        }
+        
+        .empty-state h3 {
+            font-size: 32px !important;
+            margin-bottom: 16px !important;
+        }
+        
+        .empty-state p {
+            font-size: 20px !important;
+            margin: 20px 0 35px 0 !important;
+        }
+        
+        .empty-state .btn {
+            font-size: 18px !important;
+            padding: 18px 40px !important;
+            border-radius: 30px !important;
+        }
+        
+        .empty-state > div:last-child {
+            margin-top: 50px !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 20px !important;
+        }
+        
+        .empty-state > div:last-child > div {
+            padding: 20px !important;
+        }
+        
+        .empty-state > div:last-child > div > div:first-child {
+            font-size: 32px !important;
+            margin-right: 20px !important;
+        }
+        
+        .empty-state > div:last-child > div > div:last-child > div:first-child {
+            font-size: 16px !important;
+        }
+        
+        .empty-state > div:last-child > div > div:last-child > div:last-child {
+            font-size: 14px !important;
+        }
+        
+        /* Quick stats responsive */
+        .card > div:last-child {
+            margin-top: 40px !important;
+            padding: 30px !important;
+            border-radius: 20px !important;
+        }
+        
+        .card > div:last-child h3 {
+            font-size: 20px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        .card > div:last-child > div {
+            gap: 20px !important;
+        }
+        
+        .card > div:last-child > div > div {
+            padding: 20px !important;
+        }
+        
+        .card > div:last-child > div > div > div:first-child {
+            font-size: 32px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .card > div:last-child > div > div > div:last-child {
+            font-size: 14px !important;
+        }
+    }
+    
+    @media (max-width: 767px) {
+        /* Mobile-specific optimizations */
+        .topic-card-enhanced {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn {
+            min-height: 44px !important;
+            touch-action: manipulation;
+        }
+        
+        /* Ensure proper spacing on mobile */
+        .card {
+            padding: 15px !important;
+        }
+        
+        .topics-grid {
+            gap: 15px !important;
+        }
+        
+        .topic-card-enhanced {
+            padding: 20px !important;
+        }
+        
+        /* Better touch targets */
+        .mobile-stack .btn {
+            min-height: 48px !important;
+            padding: 12px 20px !important;
+        }
+    }
+</style>
+{% endblock %}

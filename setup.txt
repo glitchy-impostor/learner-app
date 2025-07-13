@@ -1,0 +1,118 @@
+
+# Setup Instructions
+
+## 1. Project Structure
+Create the following folder structure:
+
+```
+learning_app/
+├── app.py
+├── requirements.txt
+├── templates/
+│   ├── base.html
+│   ├── login.html
+│   ├── register.html
+│   ├── dashboard.html
+│   ├── create_topic.html
+│   ├── topic_conversation.html
+│   └── learn.html
+└── learning_app.db (will be created automatically)
+```
+
+## 2. Installation Steps
+
+1. Create a virtual environment:
+```bash
+python -m venv venv
+```
+
+2. Activate the virtual environment:
+- Windows: `venv\Scripts\activate`
+- Mac/Linux: `source venv/bin/activate`
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Set up OpenAI API key:
+   - Get your API key from https://platform.openai.com/api-keys
+   - Replace `"your-openai-api-key-here"` in app.py with your actual API key
+
+5. Update the secret key:
+   - Replace `'your-secret-key-change-in-production'` with a secure random string
+
+## 3. Running the Application
+
+1. Run the Flask app:
+```bash
+python app.py
+```
+
+2. Open your browser and go to: http://127.0.0.1:5000
+
+## 4. How to Use
+
+1. **Register/Login**: Create an account or login with existing credentials
+2. **Create Topic**: Click "New Topic" and fill out the form with:
+   - Topic title (e.g., "Python Programming")
+   - Detailed description of what you want to learn
+   - Learning duration (7-90 days)
+   - Frequency (daily/every other day/weekly)
+3. **AI Conversation**: The AI will ask follow-up questions to understand your goals better
+4. **Start Learning**: Once setup is complete, click "Continue Learning" to access your daily content
+5. **Daily Learning Flow**:
+   - Read 3 educational notes
+   - Practice with flashcards (click to flip)
+   - Take today's quiz (5-6 questions)
+   - Take comprehensive review quiz (8-10 questions)
+   - Complete the day and return to dashboard
+
+## 5. Key Features
+
+- **Adaptive Learning**: System tracks wrong answers and time spent to identify weak areas
+- **Content Generation**: AI creates 2 days of content at once, then generates new content as needed
+- **Progress Tracking**: Detailed analytics on user performance
+- **Multiple Topics**: Support for up to 5 active topics per user
+- **Responsive Design**: Clean, modern interface with interactive elements
+
+## 6. API Usage Notes
+
+- Uses GPT-4o-mini for cost-effective content generation
+- Implements basic caching through database storage
+- Content is generated in batches to manage API costs
+- All user interactions are tracked for adaptive learning
+
+## 7. Database Schema
+
+The app automatically creates these tables:
+- **User**: User accounts and authentication
+- **Topic**: Learning topics with conversation history
+- **DailyContent**: Generated notes, flashcards, and quizzes for each day
+- **UserProgress**: Detailed tracking of user performance and time spent
+
+## 8. Deployment on PythonAnywhere
+
+1. Upload your files to PythonAnywhere
+2. Create a new web app with Flask
+3. Update the WSGI configuration file
+4. Install requirements in the console
+5. Set environment variables for API keys
+6. Update database path for production use
+
+## 9. Future Enhancements (Not in MVP)
+
+- File upload support for documents
+- Quizlet integration
+- Leaderboards
+- Email notifications
+- Advanced analytics dashboard
+- Mobile app
+- Collaborative features
+
+## 10. Troubleshooting
+
+- **OpenAI API Errors**: Check your API key and billing status
+- **Database Issues**: Delete learning_app.db and restart to recreate
+- **Template Errors**: Ensure all HTML files are in the templates/ folder
+- **Import Errors**: Verify all requirements are installed in your virtual environment

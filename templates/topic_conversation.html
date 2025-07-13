@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Setup: {{ topic.title }} - Learning App{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h1 style="margin-bottom: 30px;">Let's customize your learning experience</h1>
+    <h2 style="color: #667eea; margin-bottom: 20px;">{{ topic.title }}</h2>
+    
+    <div id="conversation" style="margin-bottom: 30px;">
+        {% for message in conversation %}
+            <div style="margin: 20px 0; padding: 15px; border-radius: 12px; 
+                        {% if message.role == 'assistant' %}background: #f0f4ff; border-left: 4px solid #667eea;{% else %}background: #f7fafc; border-left: 4px solid #764ba2;{% endif %}">
+                <strong>{% if message.role == 'assistant' %}🤖 AI Tutor:{% else %}👤 You:{% endif %}</strong>
+                <p style="margin-top: 10px;">{{ message.content }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div id="response-area">
+        <div class="form-group">
+            <label for="user-response">Your Response:</label>
+            <textarea id="user-response" rows="3" placeholder="Type your response here..."></textarea>
+        </div>
+        <button onclick="sendResponse()" class="btn">Send Response</button>
+    </div>
+    
+    <div id="loading" style="display: none; text-align: center; margin: 20px 0;">
+        <p>🤔 AI is thinking...</p>
+    </div>
+</div>
+
+<script>
+async function sendResponse() {
+    const responseText = document.getElementById('user-response').value.trim();
+    if (!responseText) return;
+    
+    // Show loading
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('response-area').style.display = 'none';
+    
+    // Add user message to conversation
+    const conversationDiv = document.getElementById('conversation');
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.style.cssText = 'margin: 20px 0; padding: 15px; border-radius: 12px; background: #f7fafc; border-left: 4px solid #764ba2;';
+    userMessageDiv.innerHTML = `<strong>👤 You:</strong><p style="margin-top: 10px;">${responseText}</p>`;
+    conversationDiv.appendChild(userMessageDiv);
+    
+    try {
+        const response = await fetch(`{{ url_for('respond_to_conversation', topic_id=topic.id) }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ response: responseText })
+        });
+        
+        const data = await response.json();
+        
+        // Add AI response
+        const aiMessageDiv = document.createElement('div');
+        aiMessageDiv.style.cssText = 'margin: 20px 0; padding: 15px; border-radius: 12px; background: #f0f4ff; border-left: 4px solid #667eea;';
+        aiMessageDiv.innerHTML = `<strong>🤖 AI Tutor:</strong><p style="margin-top: 10px;">${data.response}</p>`;
+        conversationDiv.appendChild(aiMessageDiv);
+        
+        // Clear input
+        document.getElementById('user-response').value = '';
+        
+        if (data.finished) {
+            // Redirect to dashboard after completion
+            setTimeout(() => {
+                window.location.href = "{{ url_for('dashboard') }}";
+            }, 3000);
+        } else {
+            // Show response area again
+            document.getElementById('response-area').style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error sending response. Please try again.');
+        document.getElementById('response-area').style.display = 'block';
+    }
+    
+    document.getElementById('loading').style.display = 'none';
+}
+
+// Allow Enter key to send response
+document.getElementById('user-response').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendResponse();
+    }
+});
+</script>
+{% endblock %}

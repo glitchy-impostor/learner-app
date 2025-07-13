@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}All Flashcards: {{ topic.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h1 style="font-size: 24px; margin-bottom: 5px;">📚 All Flashcards</h1>
+            <h2 style="color: #667eea; font-size: 18px; margin: 0; word-break: break-word;">{{ topic.title }}</h2>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+    
+    {% if flashcards %}
+        <div style="margin-bottom: 20px;">
+            <p style="color: #718096; font-size: 14px;">Total flashcards: {{ flashcards|length }} • Tap any card to flip</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+            {% for flashcard in flashcards %}
+                <div class="flashcard mobile-flashcard" data-id="{{ flashcard.id }}" onclick="flipCard(this)">
+                    <div class="flashcard-inner" style="height: 180px;">
+                        <div class="flashcard-front">
+                            <div style="text-align: center; padding: 15px;">
+                                <p style="font-size: 16px; margin-bottom: 10px; line-height: 1.4;">{{ flashcard.front }}</p>
+                                <small style="opacity: 0.8; font-size: 12px;">Day {{ flashcard.day }} • {{ flashcard.note_reference }}</small>
+                            </div>
+                        </div>
+                        <div class="flashcard-back">
+                            <div style="text-align: center; padding: 15px;">
+                                <p style="font-size: 14px; margin-bottom: 10px; line-height: 1.4;">{{ flashcard.back }}</p>
+                                <small style="opacity: 0.8; font-size: 12px;">Day {{ flashcard.day }} • {{ flashcard.note_reference }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{{ url_for('learn_paginated', topic_id=topic.id) }}" class="btn">Continue Today's Lesson</a>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 40px 20px; color: #718096;">
+            <h3 style="font-size: 18px; margin-bottom: 15px;">No flashcards yet!</h3>
+            <p style="margin: 15px 0; font-size: 14px;">Complete some lessons to see your flashcards here.</p>
+            <a href="{{ url_for('learn_paginated', topic_id=topic.id) }}" class="btn">Start Learning</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .mobile-flashcard {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    @media (min-width: 768px) {
+        .card h1 {
+            font-size: 32px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .card h2 {
+            font-size: 24px !important;
+        }
+        
+        .card p {
+            font-size: 16px !important;
+        }
+        
+        .flashcard-grid {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+            gap: 20px !important;
+        }
+        
+        .flashcard-inner {
+            height: 200px !important;
+        }
+        
+        .flashcard-front div, .flashcard-back div {
+            padding: 20px !important;
+        }
+        
+        .flashcard-front p, .flashcard-back p {
+            font-size: 18px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .flashcard-front small, .flashcard-back small {
+            font-size: 14px !important;
+        }
+    }
+</style>
+
+<script>
+function flipCard(card) {
+    card.classList.toggle('flipped');
+}
+</script>
+{% endblock %}
