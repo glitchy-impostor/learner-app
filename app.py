@@ -9,7 +9,7 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.envrion.get("secret")
+app.config['SECRET_KEY'] = os.environ.get("secret")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
